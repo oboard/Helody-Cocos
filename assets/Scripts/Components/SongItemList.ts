@@ -1,4 +1,5 @@
 import { _decorator, Component, director, find, Node, Animation, SpriteFrame, Prefab, instantiate, assetManager, resources, Sprite, Label, Button, sys } from 'cc';
+import { GameScript } from '../GameScript';
 import { SongInfo } from '../Models/SongInfo';
 const { ccclass, property, } = _decorator;
 
@@ -7,28 +8,29 @@ export class SongItemList extends Component {
     // @property([SongInfo])
     items: SongInfo[] = [
         {
-            id:0,
+            id: 0,
             itemName: 'Beat Thee',
             itemPath: 'BeatThee',
             itemSongFile: 'Beat Thee',
-            itemDescription:'the first song'
+            itemDescription: 'the first song'
         },
         {
-            id:0,
+            id: 0,
             itemName: 'Beat Thee',
             itemPath: 'BeatThee',
             itemSongFile: 'Beat Thee',
-            itemDescription:'the first song'
+            itemDescription: 'the first song'
         },
         {
-            id:0,
+            id: 0,
             itemName: 'Beat Thee',
             itemPath: 'BeatThee',
             itemSongFile: 'Beat Thee',
-            itemDescription:'the first song'
+            itemDescription: 'the first song'
         },
-        
+
     ];
+
     @property(Prefab)
     itemPrefab: Prefab | null = null;
 
@@ -51,16 +53,19 @@ export class SongItemList extends Component {
             eventHandler.target = this.node;
             eventHandler.component = "SongItemList";
             eventHandler.handler = "clickItem"
-            eventHandler.emit([data])
+            eventHandler.emit([i])
             button.clickEvents.push(eventHandler);
             // (item.getComponent('SongTemplate') as SongTemplate).init(data);
         }
     }
 
-    clickItem(data: SongInfo) {
-        sys.localStorage.setItem('current', JSON.stringify(data));
+    clickItem(index) {
+        let data = this.items[index];
+        // sys.localStorage.setItem('current', JSON.stringify(data));
+        GameScript.data = data;
         let game = find('Game');
         game.active = true;
-        game.getComponent('GameScript')
+        console.log(game);
+        game.getComponent(GameScript).startGame();
     }
 }

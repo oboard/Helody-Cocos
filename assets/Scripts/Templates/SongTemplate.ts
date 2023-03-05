@@ -12,11 +12,4 @@ export class SongTemplate extends Component {
     public itemName: Label | null = null;
     @property(Label)
     public itemDescription: Label | null = null;
-
-    init(data: SongInfo) {
-        this.id = data.id;
-        this.itemBackground.spriteFrame = data.itemBackground;
-        this.itemName.string = data.itemName;
-        this.itemDescription.string = data.itemDescription;
-    }
 }

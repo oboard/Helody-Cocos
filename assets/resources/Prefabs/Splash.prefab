@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "Splash",
+    "_name": "",
     "_objFlags": 0,
     "_native": "",
     "data": {
@@ -24,7 +24,7 @@
     "_active": true,
     "_components": [],
     "_prefab": {
-      "__id__": 39
+      "__id__": 37
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -89,13 +89,10 @@
       },
       {
         "__id__": 33
-      },
-      {
-        "__id__": 35
       }
     ],
     "_prefab": {
-      "__id__": 38
+      "__id__": 36
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -187,7 +184,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 320,
+    "_orthoHeight": 371.5926892950391,
     "_near": 0,
     "_far": 1000,
     "_color": {
@@ -679,10 +676,6 @@
       {
         "__uuid__": "2207ea75-3c3a-4c8b-ac6c-3c9dcc93fc69",
         "__expectedType__": "cc.AnimationClip"
-      },
-      {
-        "__uuid__": "d9e22872-7e65-47ed-9c16-78fcdecc4a4e",
-        "__expectedType__": "cc.AnimationClip"
       }
     ],
     "_defaultClip": {
@@ -696,34 +689,6 @@
     "fileId": "0bssbQ0PtFQbveuoPTydb2"
   },
   {
-    "__type__": "cc.Animation",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 2
-    },
-    "_enabled": true,
-    "__prefab": {
-      "__id__": 32
-    },
-    "playOnLoad": true,
-    "_clips": [
-      {
-        "__uuid__": "d1a837f4-9039-468a-a59b-9e404195f501",
-        "__expectedType__": "cc.AnimationClip"
-      }
-    ],
-    "_defaultClip": {
-      "__uuid__": "d1a837f4-9039-468a-a59b-9e404195f501",
-      "__expectedType__": "cc.AnimationClip"
-    },
-    "_id": ""
-  },
-  {
-    "__type__": "cc.CompPrefabInfo",
-    "fileId": "a7Jnu87gpEk4Gn8h15yIqP"
-  },
-  {
     "__type__": "9f616lx5tlAIa4w+jV8Q+eE",
     "_name": "",
     "_objFlags": 0,
@@ -732,7 +697,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 34
+      "__id__": 32
     },
     "_id": ""
   },
@@ -749,11 +714,11 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 36
+      "__id__": 34
     },
     "clickEvents": [
       {
-        "__id__": 37
+        "__id__": 35
       }
     ],
     "_interactable": true,

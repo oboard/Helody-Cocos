@@ -9,24 +9,24 @@ export class SongItemList extends Component {
     items: SongInfo[] = [
         {
             id: 0,
-            itemName: 'Beat Thee',
-            itemPath: 'BeatThee',
-            itemSongFile: 'Beat Thee',
+            itemName: 'Barroom Ballet',
+            itemPath: 'BarroomBallet',
+            itemSongFile: 'Barroom Ballet',
             itemDescription: 'the first song'
         },
         {
-            id: 0,
-            itemName: 'Beat Thee',
-            itemPath: 'BeatThee',
-            itemSongFile: 'Beat Thee',
-            itemDescription: 'the first song'
+            id: 1,
+            itemName: 'Memento',
+            itemPath: 'Memento',
+            itemSongFile: 'audio',
+            itemDescription: 'MementoMemento~'
         },
         {
-            id: 0,
-            itemName: 'Beat Thee',
-            itemPath: 'BeatThee',
-            itemSongFile: 'Beat Thee',
-            itemDescription: 'the first song'
+            id: 2,
+            itemName: 'Animals',
+            itemPath: 'Animals',
+            itemSongFile: 'Animals',
+            itemDescription: 'Animals~'
         },
 
     ];
@@ -53,13 +53,16 @@ export class SongItemList extends Component {
             eventHandler.target = this.node;
             eventHandler.component = "SongItemList";
             eventHandler.handler = "clickItem"
-            eventHandler.emit([i])
+            eventHandler.customEventData = i.toString();
+            // eventHandler.emit([i])
             button.clickEvents.push(eventHandler);
             // (item.getComponent('SongTemplate') as SongTemplate).init(data);
         }
     }
 
-    clickItem(index) {
+    clickItem(event, customEventData) {
+        let index = Number(customEventData);
+        console.log(customEventData);
         let data = this.items[index];
         // sys.localStorage.setItem('current', JSON.stringify(data));
         GameScript.data = data;

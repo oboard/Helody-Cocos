@@ -1,4 +1,4 @@
-import { _decorator, Component, director, find, Node, Animation, Prefab, instantiate, resources, Vec3, sys, Sprite, SpriteFrame, Label, JsonAsset, error, AudioSource, AudioClip, UITransform, math, Vec2, UIOpacity } from 'cc';
+import { _decorator, Component, director, find, Node, Animation, Prefab, instantiate, resources, Vec3, sys, Sprite, SpriteFrame, Label, JsonAsset, error, AudioSource, AudioClip, UITransform, math, Vec2, UIOpacity, Game } from 'cc';
 import { SongInfo } from './Models/SongInfo';
 import { ImageFixedSize } from './Components/ImageFixedSize';
 import { BeatMapInfo, Note } from './Models/BeatMapInfo';
@@ -94,8 +94,8 @@ export class GameScript extends Component {
         setTimeout(() => {
             GameScript.startTime = Date.now() - GameScript.timeOffset - GameScript.audio.currentTime * 1000;
             GameScript.audio.play();
+            GameScript.pauseStartTime = 0;
         }, 3000);
-        GameScript.pauseStartTime = 0;
 
         this.closePauseLayout();
     }
@@ -198,15 +198,14 @@ export class GameScript extends Component {
 
         GameScript.beatmap.clips.map((clip) => {
             // 片段，每个片段一条判定线
-            let now64 = time * clip.bpm;
-            let now = time * clip.bpm * 64;
-            let view = clip.bpm * 5;
+            const now = time * clip.bpm;
+            const view = clip.bpm * 5;
 
-            let w = 960, h = 640;
+            const w = 960, h = 640;
 
-            let lineOffset = new Vec3(0, - h / 4, 0);
+            const lineOffset = new Vec3(0, - h / 4, 0);
 
-            let blockHeight = h / 20;
+            const blockHeight = h / 20;
 
 
             let lineNode: Node | null = null;
@@ -249,15 +248,11 @@ export class GameScript extends Component {
             });
             for (let index in elements) {
                 const item = elements[index];
-                let ceilHeight = (item.type === 2) ?
-                    (now > item.start ?
-                        ((item.length - (now - item.start)) / 64 * blockHeight)
-                        : (item.length / 64 * blockHeight)
-                    )
-                    : w / 10;
+                let ceilHeight = getNoteHeight(item, blockHeight, now, w);
                 if (ceilHeight < 0) ceilHeight = 0;
+                const ceilWidth = (item.type == 2) ? w / 8 * 0.8 : w / 8;
                 const x = item.x / 100 * w;
-                const y = (item.start / 64 - now64) * blockHeight + ((item.type === 2) ? (ceilHeight / 2) : 0);
+                const y = (item.start - now) * blockHeight + ((item.type === 2) ? (ceilHeight / 2) : 0);
 
                 let node: Node | null = null;
                 if (!item._node) {
@@ -281,9 +276,11 @@ export class GameScript extends Component {
                             'Miss'
                         ];
                         const time1 = (Date.now() - GameScript.timeOffset - GameScript.startTime) / 60000;
-                        const now1 = time1 * clip.bpm;
-                        const difficulty = 4;
-                        const hitJudge = Math.round(Math.abs(item.start / 64 - now1) / difficulty);
+                        const difficulty = 200;
+                        const hitJudge = Math.round(Math.abs(item.start / clip.bpm - time1) * difficulty);
+                        if(hitJudge > 4) {
+                            return;
+                        }
                         // console.log(item.start-now1);
                         if (hitJudge < 4) {
                             GameScript.result.combo++;
@@ -301,7 +298,7 @@ export class GameScript extends Component {
                         } else if (hitJudge === 3) {
                             GameScript.result.bad++;
                             GameScript.result.score += 1;
-                        } else if (hitJudge >= 4) {
+                        } else if (hitJudge === 4) {
                             this.enmiss(item);
                         }
                         console.log(hitJudgeList[hitJudge]);
@@ -322,24 +319,33 @@ export class GameScript extends Component {
                                 uiTransform.setContentSize(w / 8, w / 8);
                                 animNode.setPosition(new Vec3(x, 0, 0).add(lineOffset));
                                 screen.addChild(animNode);
-                                const anim = setInterval((handler, timeout) => {
-                                    const time1 = (Date.now() - GameScript.timeOffset - GameScript.startTime) / 60000;
-                                    const now1 = time1 * clip.bpm;
+
+                                let anim = 0;
+                                const destroyAnim = () => {
+                                    if (animNode) {
+                                        animNode.destroy();
+                                        animNode = null;
+                                    }
+                                    if (anim) {
+                                        clearInterval(anim);
+                                        anim = 0;
+                                    }
+                                }
+
+                                const lastTime = Date.now();
+                                anim = setInterval((handler, timeout) => {
                                     if (uiOpacity) {
-                                        uiOpacity.opacity = 200 - Math.abs(item.start / 64 - now1) * 20;
+                                        uiOpacity.opacity = 200 - (Date.now() - lastTime);
                                         if (uiOpacity.opacity < 0) {
-                                            if (animNode) {
-                                                animNode.destroy();
-                                                animNode = null;
-                                            }
+                                            destroyAnim();
                                         }
                                     }
                                     if (!animNode || !uiOpacity) {
-                                        clearInterval(anim);
+                                        destroyAnim();
                                     }
                                 }, 10);
 
-                                setTimeout(() => clearInterval(anim), 1000);
+                                setTimeout(() => destroyAnim(), 1000);
                             }
                         }
                         // event.getID(); //Touch事件的ID
@@ -369,28 +375,29 @@ export class GameScript extends Component {
                             sprite.spriteFrame = this.tap;
                             break;
                     }
-                    uiTransform.setContentSize(new math.Size(w / 8, ceilHeight));
+                    uiTransform.setContentSize(new math.Size(ceilWidth, ceilHeight));
                 } else {
                     node = item._node;
                 }
                 if (node) {
-                    if (item.judged && item.type === 2) {
+                    if (item.judged && item.type === 2 && !item.miss && item.start < now) {
                         // Holding
-                        node.getComponent(UITransform).setContentSize(new math.Size(w / 8, ceilHeight));
-                        node.position = new Vec3(x, ceilHeight / 2 - 8, 0).add(lineOffset);
+                        node.getComponent(UITransform).setContentSize(new math.Size(ceilWidth, ceilHeight));
+                        node.position = new Vec3(x, ceilHeight / 2, 0).add(lineOffset);
                     } else {
                         node.position = new Vec3(x, y, 0).add(lineOffset);
                     }
 
-                    if (y < -blockHeight) {
+                    if (y < -blockHeight && !(item.type === 2 && item.judged) && GameScript.audio.playing) {
                         node.getComponent(UIOpacity).opacity = 100;
                         if (!item.judged) {
                             this.enmiss(item);
                         }
                     }
                     if (item.miss) {
+                        // spriteFrame改变后会重置大小
                         node.getComponent(Sprite).spriteFrame = this.miss;
-                        node.getComponent(UITransform).setContentSize(new math.Size(w / 8, ceilHeight));
+                        node.getComponent(UITransform).setContentSize(ceilWidth, ceilHeight);
                     }
                 }
             }
@@ -404,5 +411,14 @@ export class GameScript extends Component {
         GameScript.result.combo = 0;
         GameScript.result.miss++;
     }
+}
+
+function getNoteHeight(item: Note, blockHeight: number, now: number, w: number):number {
+    return (item.type === 2) ?
+    ((now > item.start && item.judged && !item.miss) ?
+        ((item.length - (now - item.start)) * blockHeight)
+        : (item.length * blockHeight)
+    )
+    : w / 10;
 }
 

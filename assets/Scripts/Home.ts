@@ -12,7 +12,7 @@ export class Home extends Component {
     onLoad() {
         // find('SongPicker').setScale(new Vec3(0,0,0));
         find('Game').active = false;
-        
+        find('Result').active = false;
     }
 
     go() {

@@ -196,7 +196,12 @@ export class GameScript extends Component {
 
         let time = (Date.now() - GameScript.timeOffset - GameScript.startTime) / 60000;
 
-        GameScript.beatmap.clips.map((clip) => {
+        if(time > GameScript.audio.duration) {
+            this.onBackButtonClick();
+            find('Result').active = true;
+        }
+
+        GameScript.beatmap.clips.map(clip => {
             // 片段，每个片段一条判定线
             const now = time * clip.bpm;
             const view = clip.bpm * 5;
@@ -226,11 +231,12 @@ export class GameScript extends Component {
                 lineNode.position = lineOffset;
             }
 
-            let elements = clip.notes.filter(function (item, index, array) {
+            let notes = clip.notes.filter(item => {
                 // if (distance >= Math.abs(item.start - now)) {
                 //   nearest = index;
                 //   distance = Math.abs(item.start - now);
                 // }
+                if(clip.bpm == 0) return true;
                 let show = false;
                 switch (item.type) {
                     case 2:
@@ -246,26 +252,25 @@ export class GameScript extends Component {
                 }
                 return show;
             });
-            for (let index in elements) {
-                const item = elements[index];
-                let ceilHeight = getNoteHeight(item, blockHeight, now, w);
+            notes.forEach(note => {
+                let ceilHeight = getNoteHeight(note, blockHeight, now, w);
                 if (ceilHeight < 0) ceilHeight = 0;
-                const ceilWidth = (item.type == 2) ? w / 8 * 0.8 : w / 8;
-                const x = item.x / 100 * w;
-                const y = (item.start - now) * blockHeight + ((item.type === 2) ? (ceilHeight / 2) : 0);
+                const ceilWidth = (note.type == 2) ? w / 8 * 0.8 : w / 8;
+                const x = note.x / 100 * w;
+                const y = (note.start - now) * blockHeight + ((note.type === 2) ? (ceilHeight / 2) : 0);
 
                 let node: Node | null = null;
-                if (!item._node) {
+                if (!note._node) {
                     // 创建
-                    item._node = node = new Node();
+                    note._node = node = new Node();
                     const uiTransform = node.addComponent(UITransform);
                     const sprite = node.addComponent(Sprite);
                     node.addComponent(UIOpacity);
                     // node.position = new Vec3(x, y, 0);
                     screen.insertChild(node, 0);
-                    item.judged = false;
-                    item.miss = false;
-                    node.on(Node.EventType.TOUCH_START, function (event) {
+                    note.judged = false;
+                    note.miss = false;
+                    node.on(Node.EventType.TOUCH_START, event => {
                         // console.log('Touch Start');
                         // console.log(y);
                         const hitJudgeList = [
@@ -277,7 +282,7 @@ export class GameScript extends Component {
                         ];
                         const time1 = (Date.now() - GameScript.timeOffset - GameScript.startTime) / 60000;
                         const difficulty = 200;
-                        const hitJudge = Math.round(Math.abs(item.start / clip.bpm - time1) * difficulty);
+                        const hitJudge = Math.round(Math.abs(note.start / clip.bpm - time1) * difficulty);
                         if(hitJudge > 4) {
                             return;
                         }
@@ -299,12 +304,12 @@ export class GameScript extends Component {
                             GameScript.result.bad++;
                             GameScript.result.score += 1;
                         } else if (hitJudge === 4) {
-                            this.enmiss(item);
+                            this.enmiss(note);
                         }
                         console.log(hitJudgeList[hitJudge]);
-                        if (item) {
-                            item.judged = true;
-                            if (item.type === 2) {
+                        if (note) {
+                            note.judged = true;
+                            if (note.type === 2) {
 
                             } else {
                                 node.active = false;
@@ -358,7 +363,7 @@ export class GameScript extends Component {
                     }, this);
 
 
-                    switch (item.type) {
+                    switch (note.type) {
                         case 1:
                             sprite.spriteFrame = this.tap;
                             break;
@@ -377,10 +382,10 @@ export class GameScript extends Component {
                     }
                     uiTransform.setContentSize(new math.Size(ceilWidth, ceilHeight));
                 } else {
-                    node = item._node;
+                    node = note._node;
                 }
                 if (node) {
-                    if (item.judged && item.type === 2 && !item.miss && item.start < now) {
+                    if (note.judged && note.type === 2 && !note.miss && note.start < now) {
                         // Holding
                         node.getComponent(UITransform).setContentSize(new math.Size(ceilWidth, ceilHeight));
                         node.position = new Vec3(x, ceilHeight / 2, 0).add(lineOffset);
@@ -388,22 +393,20 @@ export class GameScript extends Component {
                         node.position = new Vec3(x, y, 0).add(lineOffset);
                     }
 
-                    if (y < -blockHeight && !(item.type === 2 && item.judged) && GameScript.audio.playing) {
+                    if (y < -blockHeight && !(note.type === 2 && note.judged) && GameScript.audio.playing) {
                         node.getComponent(UIOpacity).opacity = 100;
-                        if (!item.judged) {
-                            this.enmiss(item);
+                        if (!note.judged) {
+                            this.enmiss(note);
                         }
                     }
-                    if (item.miss) {
+                    if (note.miss) {
                         // spriteFrame改变后会重置大小
                         node.getComponent(Sprite).spriteFrame = this.miss;
                         node.getComponent(UITransform).setContentSize(ceilWidth, ceilHeight);
                     }
                 }
-            }
-
-        })
-
+            });
+        });
     }
 
     enmiss(item: Note) {
